@@ -1,8 +1,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 #include <cmath>
+#include <format>
+#include <iostream>
+#include <numbers>
 #include <vector>
 
 #include "main.h"
@@ -11,11 +15,13 @@
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
 
-Player::Player(Vector2 _position) { position = _position; }
+const double angularVelocity = 40 * std::numbers::pi / 180;
+
+Player::Player(Vector2 _position) { transform.position = _position; }
 
 void Player::update() {
-    position.x += velocity.x;
-    position.y += velocity.y;
+    transform.position.x += velocity.x;
+    transform.position.y += velocity.y;
 }
 
 void renderMesh(SDL_Renderer* renderer, Mesh mesh) {
@@ -65,9 +71,16 @@ int main() {
         point.y *= 30;
     }
 
-    playerMesh = transformMesh(playerMesh, Transform{player.position, -1.2});
+    // playerMesh = transformMesh(playerMesh, Transform{player.tra, -1.2});
+
+    auto lastFrame = SDL_GetTicks();
 
     while (!quit) {
+        auto curentFrame = SDL_GetTicks();
+        double deltaTime = double(curentFrame - lastFrame) / 1000;
+
+        // std::cout << std::format("{}\n", 1 / deltaTime);
+
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = true;
@@ -83,6 +96,8 @@ int main() {
             }
         }
 
+        player.transform.angle += angularVelocity * deltaTime;
+
         player.update();
 
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
@@ -90,9 +105,11 @@ int main() {
 
         SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 
-        renderMesh(renderer, transformMesh(playerMesh, player.t));
+        renderMesh(renderer, transformMesh(playerMesh, player.transform));
 
         SDL_RenderPresent(renderer);
+
+        lastFrame = curentFrame;
     }
 
     return 0;
