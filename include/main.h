@@ -7,7 +7,7 @@ struct Player {
     Transform transform = Transform(Vector2(0, 0), 0);
     Vector2 velocity = Vector2(0, 0);
 
-    void update();
+    void update(double);
     Player(Vector2);
 };
 
