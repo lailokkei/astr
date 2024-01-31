@@ -4,9 +4,10 @@
 #include <vector>
 
 struct Vector2 {
-    int x, y;
+    double x, y;
 
-    Vector2(int, int);
+    Vector2(double, double);
+    void debug();
 };
 
 struct Mesh {
@@ -20,5 +21,9 @@ struct Transform {
     Vector2 position;
     double angle;
 };
+
+Vector2 addVectors(const Vector2&, const Vector2&);
+
+Vector2 scaleVector(const Vector2&, double);
 
 #endif

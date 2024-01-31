@@ -1,7 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 #include <cmath>
@@ -16,7 +18,8 @@
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
 
-const double angularVelocity = 90 * std::numbers::pi / 180;
+const double angularVelocity = 160 * std::numbers::pi / 180;
+const int acceleration = 100;
 
 Player::Player(Vector2 _position) { transform.position = _position; }
 
@@ -79,37 +82,55 @@ int main() {
 
     bool held = false;
 
+    auto keyStates = SDL_GetKeyboardState(NULL);
+
     while (!quit) {
         auto curentFrame = SDL_GetTicks();
         double deltaTime = double(curentFrame - lastFrame) / 1000;
 
-        std::cout << std::format("{}\n", deltaTime);
+        // std::cout << std::format("{}\n", deltaTime);
 
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
 
-            if (e.type == SDL_KEYDOWN) {
-                switch (e.key.keysym.sym) {
-                case SDLK_w:
-                    held = true;
-                }
-            }
-
-            if (e.type == SDL_KEYUP) {
-                // switch (e.key.keysym.sym) {
-                // case SDLK_w:
-                held = false;
-                // }
-            }
+            // if (e.type == SDL_KEYDOWN) {
+            //     switch (e.key.keysym.sym) {
+            //     case SDLK_w:
+            //         held = true;
+            //         break;
+            //     }
+            // }
+            //
+            // if (e.type == SDL_KEYUP) {
+            //     std::cout << std::format("{}\n", e.key.keysym.sym);
+            //     switch (e.key.keysym.sym) {
+            //     case SDLK_w:
+            //         held = false;
+            //         break;
+            //     }
+            // }
         }
 
-        if (held == true) {
+        // if (true) {
+        if (keyStates[SDL_SCANCODE_W]) {
+            auto angle{player.transform.angle};
+            auto direction{Vector2(sin(angle), cos(angle))};
+            player.velocity =
+                addVectors(player.velocity,
+                           scaleVector(direction, acceleration * deltaTime));
+        }
+
+        if (keyStates[SDL_SCANCODE_A]) {
+            player.transform.angle -= angularVelocity * deltaTime;
+        }
+
+        if (keyStates[SDL_SCANCODE_D]) {
             player.transform.angle += angularVelocity * deltaTime;
         }
 
-        // player.update(deltaTime);
+        player.update(deltaTime);
 
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
         SDL_RenderClear(renderer);
