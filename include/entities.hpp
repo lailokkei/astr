@@ -19,12 +19,14 @@ struct Player {
 struct Astroid {
     Transform transform;
     Vector2 velocity;
+    double angularVelocity;
+    double angle = 0;
     Mesh mesh;
 
     int sizeTier;
 
     void move(double);
-    Astroid(Transform, Vector2);
+    Astroid(Transform, Vector2, double);
 };
 
 #endif

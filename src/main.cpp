@@ -93,9 +93,12 @@ int main() {
     Player player = Player(Vector2(50, 36));
 
     std::vector<Astroid> astroids{};
-    astroids.push_back(Astroid(Transform{Vector2(20, 36), 0}, Vector2{2, 1}));
-    astroids.push_back(Astroid(Transform{Vector2(0, 2), 0}, Vector2{2, 1}));
-    astroids.push_back(Astroid(Transform{Vector2(90, 4), 0}, Vector2{-4, 1}));
+    astroids.push_back(
+        Astroid(Transform{Vector2(20, 36), 0}, Vector2{2, 1}, 0.5));
+    astroids.push_back(
+        Astroid(Transform{Vector2(0, 2), 0}, Vector2{2, 1}, -0.1));
+    astroids.push_back(
+        Astroid(Transform{Vector2(90, 4), 0}, Vector2{-4, 1}, 0.2));
 
     auto camera = Camera{100, 75};
 
@@ -142,6 +145,7 @@ int main() {
                           vectorScale(astroid.velocity, deltaTime));
             astroid.transform.position =
                 wrapPoint(astroid.transform.position, camera);
+            astroid.transform.angle += astroid.angularVelocity * deltaTime;
         }
 
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);

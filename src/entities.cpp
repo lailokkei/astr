@@ -21,8 +21,9 @@ void Player::update(double deltaTime) {
 
 Mesh generateMesh();
 
-Astroid::Astroid(Transform transform, Vector2 velocity)
-    : transform{transform}, velocity{velocity}, mesh{generateMesh()} {}
+Astroid::Astroid(Transform transform, Vector2 velocity, double angularVelocity)
+    : transform{transform}, velocity{velocity},
+      angularVelocity{angularVelocity}, mesh{generateMesh()} {}
 
 void Astroid::move(double deltaTime) {
     transform.position =
@@ -41,7 +42,7 @@ Mesh generateMesh() {
     double dir = 0;
     while (dir < 2 * std::numbers::pi) {
         directions.push_back(dir);
-        dir += 0.4;
+        dir += 1.05;
     }
 
     Mesh astroidMesh = Mesh({});
