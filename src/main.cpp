@@ -12,8 +12,8 @@
 #include <numbers>
 #include <vector>
 
-#include "main.h"
-#include "math.h"
+#include "entities.hpp"
+#include "math.hpp"
 
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
@@ -21,18 +21,24 @@ const int SCREEN_HEIGHT = 768;
 const double angularVelocity = 160 * std::numbers::pi / 180;
 const int acceleration = 100;
 
-Player::Player(Vector2 _position) { transform.position = _position; }
+struct ScreenPoint {
+    int x;
+    int y;
+};
 
-void Player::update(double deltaTime) {
-    transform.position.x += velocity.x * deltaTime;
-    transform.position.y += velocity.y * deltaTime;
+ScreenPoint worldToScreen(Vector2 point, Camera camera) {
+    int x = (point.x / camera.width) * SCREEN_WIDTH;
+    int y = (camera.height - point.y) / camera.height * SCREEN_HEIGHT;
+    return ScreenPoint{x, y};
 }
 
-void renderMesh(SDL_Renderer* renderer, Mesh mesh) {
+void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
     std::vector<Vector2>& edges = mesh.edges;
+
     for (int i = 0; i < mesh.edges.size(); i += 2) {
-        SDL_RenderDrawLine(renderer, edges[i].x, SCREEN_HEIGHT - edges[i].y,
-                           edges[i + 1].x, SCREEN_HEIGHT - edges[i + 1].y);
+        auto p1 = worldToScreen(edges[i], camera);
+        auto p2 = worldToScreen(edges[i + 1], camera);
+        SDL_RenderDrawLine(renderer, p1.x, p1.y, p2.x, p2.y);
     }
 }
 
@@ -54,15 +60,38 @@ Mesh transformMesh(Mesh mesh, Transform transform) {
     return mesh;
 }
 
+struct GameState {};
+
+Vector2 wrapPoint(Vector2 point, Camera camera) {
+    if (point.x < 0) {
+        point.x += camera.width;
+    }
+    if (point.x > camera.width) {
+        point.x -= camera.width;
+    }
+    if (point.y < 0) {
+        point.y += camera.height;
+    }
+    if (point.y > camera.height) {
+        point.y -= camera.height;
+    }
+    // point.x = std::fmod(point.x, camera.width);
+    // point.y = std::fmod(point.y, camera.height);
+    return point;
+}
+
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == -1) {
         std::cout << std::format("{}\n", SDL_GetError());
         return 1;
     };
 
-    SDL_Window* window =
-        SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                         1024, 768, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow(
+        "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768,
+        SDL_WINDOW_SHOWN); //| SDL_WINDOW_RESIZABLE);
+
+    // window
+
     SDL_Renderer* renderer =
         SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
@@ -72,11 +101,16 @@ int main() {
     Mesh playerMesh = Mesh({Vector2(0, 2), Vector2(1, -1), Vector2(1, -1),
                             Vector2(-1, -1), Vector2(-1, -1), Vector2(0, 2)});
 
-    Player player = Player(Vector2(500, 300));
+    Player player = Player(Vector2(50, 36));
     for (auto& point : playerMesh.edges) {
-        point.x *= 30;
-        point.y *= 30;
+        point.x *= 3;
+        point.y *= 3;
     }
+
+    std::vector<Astroid> astroids{};
+    astroids.push_back(Astroid{Transform{Vector2(300, 500), 0}, Vector2{0, 0}});
+
+    auto camera = Camera{100, 75};
 
     auto lastFrame = SDL_GetTicks();
 
@@ -88,32 +122,12 @@ int main() {
         auto curentFrame = SDL_GetTicks();
         double deltaTime = double(curentFrame - lastFrame) / 1000;
 
-        // std::cout << std::format("{}\n", deltaTime);
-
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-
-            // if (e.type == SDL_KEYDOWN) {
-            //     switch (e.key.keysym.sym) {
-            //     case SDLK_w:
-            //         held = true;
-            //         break;
-            //     }
-            // }
-            //
-            // if (e.type == SDL_KEYUP) {
-            //     std::cout << std::format("{}\n", e.key.keysym.sym);
-            //     switch (e.key.keysym.sym) {
-            //     case SDLK_w:
-            //         held = false;
-            //         break;
-            //     }
-            // }
         }
 
-        // if (true) {
         if (keyStates[SDL_SCANCODE_W]) {
             auto angle{player.transform.angle};
             auto direction{Vector2(sin(angle), cos(angle))};
@@ -132,12 +146,21 @@ int main() {
 
         player.update(deltaTime);
 
+        player.transform.position =
+            wrapPoint(player.transform.position, camera);
+
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
         SDL_RenderClear(renderer);
 
         SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 
-        renderMesh(renderer, transformMesh(playerMesh, player.transform));
+        renderMesh(renderer, transformMesh(playerMesh, player.transform),
+                   camera);
+
+        for (auto astroid : astroids) {
+            renderMesh(renderer, transformMesh(astroid.mesh, astroid.transform),
+                       camera);
+        }
 
         SDL_RenderPresent(renderer);
 
