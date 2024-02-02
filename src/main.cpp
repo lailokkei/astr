@@ -18,8 +18,8 @@
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
 
-const double angularVelocity = 160 * std::numbers::pi / 180;
-const int acceleration = 100;
+const double angularVelocity = 180 * std::numbers::pi / 180;
+const int acceleration = 20;
 
 struct ScreenPoint {
     int x;
@@ -33,9 +33,9 @@ ScreenPoint worldToScreen(Vector2 point, Camera camera) {
 }
 
 void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
-    std::vector<Vector2>& edges = mesh.edges;
+    std::vector<Vector2>& edges = mesh.vertices;
 
-    for (int i = 0; i < mesh.edges.size(); i += 2) {
+    for (int i = 0; i < mesh.vertices.size() - 1; i++) {
         auto p1 = worldToScreen(edges[i], camera);
         auto p2 = worldToScreen(edges[i + 1], camera);
         SDL_RenderDrawLine(renderer, p1.x, p1.y, p2.x, p2.y);
@@ -43,24 +43,13 @@ void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
 }
 
 Mesh transformMesh(Mesh mesh, Transform transform) {
-    for (auto& point : mesh.edges) {
+    for (auto& point : mesh.vertices) {
         auto angle = -transform.angle;
-
-        Vector2 newPoint = Vector2(0, 0);
-
-        newPoint.x = point.x * cos(angle) + point.y * -sin(angle);
-        newPoint.y = point.x * sin(angle) + point.y * cos(angle);
-
-        newPoint.x += transform.position.x;
-        newPoint.y += transform.position.y;
-
-        point = newPoint;
+        point = vectorAdd(vectorRotate(point, angle), transform.position);
     }
 
     return mesh;
 }
-
-struct GameState {};
 
 Vector2 wrapPoint(Vector2 point, Camera camera) {
     if (point.x < 0) {
@@ -98,17 +87,15 @@ int main() {
     SDL_Event e;
     bool quit = false;
 
-    Mesh playerMesh = Mesh({Vector2(0, 2), Vector2(1, -1), Vector2(1, -1),
-                            Vector2(-1, -1), Vector2(-1, -1), Vector2(0, 2)});
+    Mesh playerMesh =
+        Mesh({Vector2(0, 2), Vector2(1, -1), Vector2(-1, -1), Vector2(0, 2)});
 
     Player player = Player(Vector2(50, 36));
-    for (auto& point : playerMesh.edges) {
-        point.x *= 3;
-        point.y *= 3;
-    }
 
     std::vector<Astroid> astroids{};
-    astroids.push_back(Astroid{Transform{Vector2(300, 500), 0}, Vector2{0, 0}});
+    astroids.push_back(Astroid(Transform{Vector2(20, 36), 0}, Vector2{2, 1}));
+    astroids.push_back(Astroid(Transform{Vector2(0, 2), 0}, Vector2{2, 1}));
+    astroids.push_back(Astroid(Transform{Vector2(90, 4), 0}, Vector2{-4, 1}));
 
     auto camera = Camera{100, 75};
 
@@ -132,8 +119,8 @@ int main() {
             auto angle{player.transform.angle};
             auto direction{Vector2(sin(angle), cos(angle))};
             player.velocity =
-                addVectors(player.velocity,
-                           scaleVector(direction, acceleration * deltaTime));
+                vectorAdd(player.velocity,
+                          vectorScale(direction, acceleration * deltaTime));
         }
 
         if (keyStates[SDL_SCANCODE_A]) {
@@ -148,6 +135,14 @@ int main() {
 
         player.transform.position =
             wrapPoint(player.transform.position, camera);
+
+        for (auto& astroid : astroids) {
+            astroid.transform.position =
+                vectorAdd(astroid.transform.position,
+                          vectorScale(astroid.velocity, deltaTime));
+            astroid.transform.position =
+                wrapPoint(astroid.transform.position, camera);
+        }
 
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
         SDL_RenderClear(renderer);

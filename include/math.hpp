@@ -11,7 +11,7 @@ struct Vector2 {
 };
 
 struct Mesh {
-    std::vector<Vector2> edges;
+    std::vector<Vector2> vertices;
 
     Mesh(std::vector<Vector2>);
     void debug();
@@ -22,8 +22,10 @@ struct Transform {
     double angle;
 };
 
-Vector2 addVectors(const Vector2&, const Vector2&);
+Vector2 vectorAdd(const Vector2&, const Vector2&);
 
-Vector2 scaleVector(const Vector2&, double);
+Vector2 vectorScale(const Vector2&, double);
+
+Vector2 vectorRotate(const Vector2&, double);
 
 #endif
