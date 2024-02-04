@@ -19,6 +19,7 @@ Vector2 vectorScale(const Vector2& vec, double magnitude) {
 }
 
 Vector2 vectorRotate(const Vector2& vec, double rad) {
+    rad = -rad;
     return Vector2{vec.x * cos(rad) + vec.y * -sin(rad),
                    vec.x * sin(rad) + vec.y * cos(rad)};
 }
@@ -32,7 +33,26 @@ void Mesh::debug() {
     }
 }
 
-// bool point_box_collision();
+bool point_box_collision(Vector2 point, Hitbox box) {
+    auto r = box.position.x + box.dimensions.x / 2;
+    auto l = box.position.x - box.dimensions.x / 2;
+    auto u = box.position.y + box.dimensions.y / 2;
+    auto d = box.position.y - box.dimensions.y / 2;
+    if (point.x < l) {
+        return false;
+    }
+    if (point.x > r) {
+        return false;
+    }
+    if (point.y > u) {
+        return false;
+    }
+    if (point.y < d) {
+        return false;
+    }
+
+    return true;
+}
 
 bool collision(Hitbox h1, Hitbox h2) {
     auto x1r = h1.position.x + h1.dimensions.x / 2;

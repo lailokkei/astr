@@ -33,6 +33,7 @@ Vector2 vectorScale(const Vector2&, double);
 
 Vector2 vectorRotate(const Vector2&, double);
 
+bool point_box_collision(Vector2, Hitbox);
 bool collision(Hitbox, Hitbox);
 
 #endif

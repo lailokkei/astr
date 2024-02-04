@@ -9,6 +9,7 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 #include <cmath>
+#include <cstdio>
 #include <format>
 #include <iostream>
 #include <numbers>
@@ -22,6 +23,9 @@ const int SCREEN_HEIGHT = 768;
 
 const double angularVelocity = 180 * std::numbers::pi / 180;
 const int acceleration = 20;
+const double bulletVelocity = 100;
+
+void remove_bullet(std::vector<Bullet>& bullets, int i);
 
 struct ScreenPoint {
     int x;
@@ -45,8 +49,8 @@ void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
 }
 
 Mesh boxMesh(Hitbox box) {
-    auto l = box.position.x + box.dimensions.x / 2;
-    auto r = box.position.x - box.dimensions.x / 2;
+    auto r = box.position.x + box.dimensions.x / 2;
+    auto l = box.position.x - box.dimensions.x / 2;
     auto u = box.position.y + box.dimensions.y / 2;
     auto d = box.position.y - box.dimensions.y / 2;
     return Mesh({{l, u}, {r, u}, {r, d}, {l, d}, {l, u}});
@@ -55,7 +59,7 @@ void renderBox(SDL_Renderer* renderer, Hitbox box, Camera cam) {}
 
 Mesh transformMesh(Mesh mesh, Vector2 position, double angle) {
     for (auto& point : mesh.vertices) {
-        point = vectorAdd(vectorRotate(point, -angle), position);
+        point = vectorAdd(vectorRotate(point, angle), position);
     }
 
     return mesh;
@@ -77,17 +81,33 @@ Vector2 wrapPoint(Vector2 point, Camera camera) {
     return point;
 }
 
+bool out_of_bounds(Vector2 point, Camera cam) {
+    if (point.x < 0 || point.x > cam.width) {
+        return true;
+    }
+    if (point.y < 0 || point.y > cam.height) {
+        return true;
+    }
+
+    return false;
+}
+
 struct GameState {
+    Uint8* lastKeyStates;
     const Uint8* keyStates = SDL_GetKeyboardState(NULL);
 
     Player player = Player(Vector2(50, 36));
     std::vector<Astroid> astroids{};
+    std::vector<Bullet> bullets{};
     Camera camera = Camera{100, 75};
+
+    bool idk{};
 
     GameState();
     void poll();
     void update(double);
     void render(SDL_Renderer*);
+    void shootBullet();
 };
 
 GameState::GameState() {
@@ -98,7 +118,6 @@ GameState::GameState() {
 
 void splitAstroid(std::vector<Astroid>& astroids, int i) {
     auto& parent = astroids[i];
-    std::cout << "hit\n";
     if (parent.size > 1) {
         astroids.push_back(
             Astroid(parent.position, {-2, 0}, -1, parent.size - 1));
@@ -128,6 +147,29 @@ void GameState::update(double deltaTime) {
     player.update(deltaTime);
     player.position = wrapPoint(player.position, camera);
 
+    for (int i = bullets.size() - 1; i >= 0; i--) {
+        auto& bullet = bullets[i];
+        bullet.position =
+            vectorAdd(bullet.position, vectorScale(bullet.velocity, deltaTime));
+        if (out_of_bounds(bullet.position, camera)) {
+            std::cout << "ded\n";
+            remove_bullet(bullets, i);
+        }
+    }
+
+    for (int i = bullets.size() - 1; i >= 0; i--) {
+        for (int j = astroids.size() - 1; j >= 0; j--) {
+            auto& astroid = astroids[j];
+            auto box = Hitbox{astroid.position, astroid.hitbox};
+            if (point_box_collision(bullets[i].position, box)) {
+                std::cout << "wtf\n";
+                splitAstroid(astroids, j);
+                remove_bullet(bullets, i);
+                break;
+            }
+        }
+    }
+
     for (int i = astroids.size() - 1; i >= 0; i--) {
         auto& astroid = astroids[i];
         astroid.position = vectorAdd(astroid.position,
@@ -140,6 +182,16 @@ void GameState::update(double deltaTime) {
             splitAstroid(astroids, i);
         }
     }
+
+    if (idk) {
+        std::cout << bullets.size() << '\n';
+        bullets.push_back(Bullet{
+            player.position, vectorRotate({0, bulletVelocity}, player.angle)});
+    }
+}
+
+void remove_bullet(std::vector<Bullet>& bullets, int i) {
+    bullets.erase(bullets.begin() + i);
 }
 
 void GameState::render(SDL_Renderer* renderer) {
@@ -161,6 +213,12 @@ void GameState::render(SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
         renderMesh(renderer,
                    boxMesh(Hitbox{{astroid.position}, astroid.hitbox}), camera);
+    }
+
+    for (auto bullet : bullets) {
+        SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
+        renderMesh(renderer, boxMesh(Hitbox{{bullet.position}, bullet.hitbox}),
+                   camera);
     }
 
     SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
@@ -198,17 +256,19 @@ int main() {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-            // if (e.type == SDL_KEYDOWN) {
-            //     if (e.key.keysym.sym == SDLK_j) {
-            //         splitAstroid(gameState.astroids, 0);
-            //     }
-            // }
+
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_SPACE) {
+                    gameState.idk = true;
+                }
+            }
         }
 
         gameState.update(deltaTime);
         gameState.render(renderer);
 
         lastFrame = curentFrame;
+        gameState.idk = false;
     }
 
     SDL_Quit();

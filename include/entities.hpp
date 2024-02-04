@@ -34,4 +34,10 @@ struct Astroid {
     Astroid(Vector2, Vector2, double, int);
 };
 
+struct Bullet {
+    Vector2 position;
+    Vector2 velocity;
+    Vector2 hitbox = {1, 1};
+};
+
 #endif
