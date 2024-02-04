@@ -10,6 +10,11 @@ struct Vector2 {
     void debug();
 };
 
+struct Hitbox {
+    Vector2 position;
+    Vector2 dimensions;
+};
+
 struct Mesh {
     std::vector<Vector2> vertices;
 
@@ -27,5 +32,7 @@ Vector2 vectorAdd(const Vector2&, const Vector2&);
 Vector2 vectorScale(const Vector2&, double);
 
 Vector2 vectorRotate(const Vector2&, double);
+
+bool collision(Hitbox, Hitbox);
 
 #endif

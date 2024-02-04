@@ -31,3 +31,25 @@ void Mesh::debug() {
         std::cout << std::format("x: {}, y: {}\n", point.x, point.y);
     }
 }
+
+bool collision(Hitbox h1, Hitbox h2) {
+    auto x1r = h1.position.x + h1.dimensions.x / 2;
+    auto x1l = h1.position.x - h1.dimensions.x / 2;
+    auto x2r = h2.position.x + h2.dimensions.x / 2;
+    auto x2l = h2.position.x - h2.dimensions.x / 2;
+
+    if (x1l > x2r || x1r < x2l) {
+        return false;
+    }
+
+    auto y1r = h1.position.y + h1.dimensions.y / 2;
+    auto y1l = h1.position.y - h1.dimensions.y / 2;
+    auto y2r = h2.position.y + h2.dimensions.y / 2;
+    auto y2l = h2.position.y - h2.dimensions.y / 2;
+
+    if (y1l > y2r || y1r < y2l) {
+        return false;
+    }
+
+    return true;
+}

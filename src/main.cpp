@@ -43,23 +43,21 @@ void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
     }
 }
 
+Mesh boxMesh(Hitbox box) {
+    auto l = box.position.x + box.dimensions.x / 2;
+    auto r = box.position.x - box.dimensions.x / 2;
+    auto u = box.position.y + box.dimensions.y / 2;
+    auto d = box.position.y - box.dimensions.y / 2;
+    return Mesh({{l, u}, {r, u}, {r, d}, {l, d}, {l, u}});
+}
+void renderBox(SDL_Renderer* renderer, Hitbox box, Camera cam) {}
+
 Mesh transformMesh(Mesh mesh, Vector2 position, double angle) {
     for (auto& point : mesh.vertices) {
         point = vectorAdd(vectorRotate(point, -angle), position);
     }
 
     return mesh;
-}
-
-struct Hitbox {
-    Vector2 position;
-    Vector2 dimensions;
-};
-
-bool collision(Hitbox h1, Hitbox h2) {
-    if (h1.position.x + h1.dimensions.x / 2 > h2.position.x - h2.dimensions.x) {
-    }
-    return false;
 }
 
 Vector2 wrapPoint(Vector2 point, Camera camera) {
@@ -80,9 +78,6 @@ Vector2 wrapPoint(Vector2 point, Camera camera) {
 
 struct GameState {
     const Uint8* keyStates = SDL_GetKeyboardState(NULL);
-
-    Mesh playerMesh =
-        Mesh({Vector2(0, 2), Vector2(1, -1), Vector2(-1, -1), Vector2(0, 2)});
 
     Player player = Player(Vector2(50, 36));
     std::vector<Astroid> astroids{};
@@ -117,14 +112,20 @@ void GameState::update(double deltaTime) {
     }
 
     player.update(deltaTime);
-
     player.position = wrapPoint(player.position, camera);
 
-    for (auto& astroid : astroids) {
+    for (int i = astroids.size() - 1; i >= 0; i--) {
+        auto& astroid = astroids[i];
         astroid.position = vectorAdd(astroid.position,
                                      vectorScale(astroid.velocity, deltaTime));
         astroid.position = wrapPoint(astroid.position, camera);
         astroid.angle += astroid.angularVelocity * deltaTime;
+
+        if (collision(Hitbox{player.position, player.hitbox},
+                      Hitbox{astroid.position, astroid.hitbox})) {
+
+            astroids.erase(astroids.begin() + i);
+        }
     }
 }
 
@@ -135,14 +136,25 @@ void GameState::render(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 
     renderMesh(renderer,
-               transformMesh(playerMesh, player.position, player.angle),
+               transformMesh(player.mesh, player.position, player.angle),
                camera);
 
     for (auto astroid : astroids) {
+        SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
         renderMesh(renderer,
                    transformMesh(astroid.mesh, astroid.position, astroid.angle),
                    camera);
+
+        SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
+        renderMesh(renderer,
+                   boxMesh(Hitbox{{astroid.position}, astroid.hitbox}), camera);
     }
+
+    SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
+    renderMesh(renderer, boxMesh(Hitbox{{player.position}, player.hitbox}),
+               camera);
+    renderMesh(renderer, boxMesh(Hitbox{{player.position}, player.hitbox}),
+               camera);
 
     SDL_RenderPresent(renderer);
 }
