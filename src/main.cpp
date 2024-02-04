@@ -43,15 +43,9 @@ void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
     }
 }
 
-// void renderBox(SDL_Renderer* renderer, Hitbox box, Camera camera) {
-//     std::array<Vector2, 4> vertices = {Vector2(0, 0)};
-//     if
-// }
-
-Mesh transformMesh(Mesh mesh, Transform transform) {
+Mesh transformMesh(Mesh mesh, Vector2 position, double angle) {
     for (auto& point : mesh.vertices) {
-        auto angle = -transform.angle;
-        point = vectorAdd(vectorRotate(point, angle), transform.position);
+        point = vectorAdd(vectorRotate(point, -angle), position);
     }
 
     return mesh;
@@ -62,10 +56,11 @@ struct Hitbox {
     Vector2 dimensions;
 };
 
-// bool collision(Hitbox h1, Hitbox h2) {
-//     if (h1.position.x + h1.dimensions.x / 2 > h2.position - h2.dimensions.x)
-//         return false;
-// }
+bool collision(Hitbox h1, Hitbox h2) {
+    if (h1.position.x + h1.dimensions.x / 2 > h2.position.x - h2.dimensions.x) {
+    }
+    return false;
+}
 
 Vector2 wrapPoint(Vector2 point, Camera camera) {
     if (point.x < 0) {
@@ -100,41 +95,36 @@ struct GameState {
 };
 
 GameState::GameState() {
-    astroids.push_back(
-        Astroid(Transform{Vector2(20, 36), 0}, Vector2{2, 1}, 0.5));
-    astroids.push_back(
-        Astroid(Transform{Vector2(0, 2), 0}, Vector2{2, 1}, -0.1));
-    astroids.push_back(
-        Astroid(Transform{Vector2(90, 4), 0}, Vector2{-4, 1}, 0.2));
+    astroids.push_back(Astroid(Vector2(20, 36), Vector2{2, 1}, 0.5));
+    astroids.push_back(Astroid(Vector2(0, 2), Vector2{2, 1}, -0.1));
+    astroids.push_back(Astroid(Vector2(90, 4), Vector2{-4, 1}, 0.2));
 }
 
 void GameState::update(double deltaTime) {
     if (keyStates[SDL_SCANCODE_W]) {
-        auto angle{player.transform.angle};
+        auto angle{player.angle};
         auto direction{Vector2(sin(angle), cos(angle))};
         player.velocity = vectorAdd(
             player.velocity, vectorScale(direction, acceleration * deltaTime));
     }
 
     if (keyStates[SDL_SCANCODE_A]) {
-        player.transform.angle -= angularVelocity * deltaTime;
+        player.angle -= angularVelocity * deltaTime;
     }
 
     if (keyStates[SDL_SCANCODE_D]) {
-        player.transform.angle += angularVelocity * deltaTime;
+        player.angle += angularVelocity * deltaTime;
     }
 
     player.update(deltaTime);
 
-    player.transform.position = wrapPoint(player.transform.position, camera);
+    player.position = wrapPoint(player.position, camera);
 
     for (auto& astroid : astroids) {
-        astroid.transform.position =
-            vectorAdd(astroid.transform.position,
-                      vectorScale(astroid.velocity, deltaTime));
-        astroid.transform.position =
-            wrapPoint(astroid.transform.position, camera);
-        astroid.transform.angle += astroid.angularVelocity * deltaTime;
+        astroid.position = vectorAdd(astroid.position,
+                                     vectorScale(astroid.velocity, deltaTime));
+        astroid.position = wrapPoint(astroid.position, camera);
+        astroid.angle += astroid.angularVelocity * deltaTime;
     }
 }
 
@@ -144,10 +134,13 @@ void GameState::render(SDL_Renderer* renderer) {
 
     SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 
-    renderMesh(renderer, transformMesh(playerMesh, player.transform), camera);
+    renderMesh(renderer,
+               transformMesh(playerMesh, player.position, player.angle),
+               camera);
 
     for (auto astroid : astroids) {
-        renderMesh(renderer, transformMesh(astroid.mesh, astroid.transform),
+        renderMesh(renderer,
+                   transformMesh(astroid.mesh, astroid.position, astroid.angle),
                    camera);
     }
 

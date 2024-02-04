@@ -1,42 +1,31 @@
 #include "entities.hpp"
 #include "math.h"
 #include "math.hpp"
-#include <algorithm>
 #include <numbers>
 #include <random>
 
-Player::Player(Vector2 position) : transform{Transform{position, 0}} {}
-
-// Vector2 wrapPosition(Vector2 position, Camera arenacamera) {
-//     position.x = arenacamera.width % position.x;
-//     position.y = arenacamera.height % position.y;
-//
-//     return position;
-// }
+Player::Player(Vector2 position) : position{position} {}
 
 void Player::update(double deltaTime) {
-    transform.position =
-        vectorAdd(transform.position, vectorScale(velocity, deltaTime));
+    position = vectorAdd(position, vectorScale(velocity, deltaTime));
 }
 
-Mesh generateMesh();
+Mesh generateAstroidMesh();
 
-Astroid::Astroid(Transform transform, Vector2 velocity, double angularVelocity)
-    : transform{transform}, velocity{velocity},
-      angularVelocity{angularVelocity}, mesh{generateMesh()} {}
+Astroid::Astroid(Vector2 position, Vector2 velocity, double angularVelocity)
+    : position{position}, velocity{velocity}, angularVelocity{angularVelocity},
+      mesh{generateAstroidMesh()} {}
 
 void Astroid::move(double deltaTime) {
-    transform.position =
-        vectorAdd(transform.position, vectorScale(velocity, deltaTime));
+    position = vectorAdd(position, vectorScale(velocity, deltaTime));
 }
 
-Mesh generateMesh() {
+Mesh generateAstroidMesh() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0, 2 * std::numbers::pi);
     std::uniform_real_distribution<> radiusRange(5, 8);
 
-    // vectorRotate(const Vector2&, double)
     std::vector<double> directions;
 
     double dir = 0;
