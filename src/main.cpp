@@ -2,6 +2,7 @@
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_stdinc.h>
@@ -90,9 +91,22 @@ struct GameState {
 };
 
 GameState::GameState() {
-    astroids.push_back(Astroid(Vector2(20, 36), Vector2{2, 1}, 0.5));
-    astroids.push_back(Astroid(Vector2(0, 2), Vector2{2, 1}, -0.1));
-    astroids.push_back(Astroid(Vector2(90, 4), Vector2{-4, 1}, 0.2));
+    astroids.push_back(Astroid(Vector2(20, 36), Vector2{2, 1}, 0.5, 7));
+    astroids.push_back(Astroid(Vector2(0, 2), Vector2{2, 1}, -0.1, 3));
+    astroids.push_back(Astroid(Vector2(90, 4), Vector2{-4, 1}, 0.2, 3));
+}
+
+void splitAstroid(std::vector<Astroid>& astroids, int i) {
+    auto& parent = astroids[i];
+    std::cout << "hit\n";
+    if (parent.size > 1) {
+        astroids.push_back(
+            Astroid(parent.position, {-2, 0}, -1, parent.size - 1));
+        astroids.push_back(
+            Astroid(parent.position, {2, 0}, 1, parent.size - 1));
+    }
+
+    astroids.erase(astroids.begin() + i);
 }
 
 void GameState::update(double deltaTime) {
@@ -123,8 +137,7 @@ void GameState::update(double deltaTime) {
 
         if (collision(Hitbox{player.position, player.hitbox},
                       Hitbox{astroid.position, astroid.hitbox})) {
-
-            astroids.erase(astroids.begin() + i);
+            splitAstroid(astroids, i);
         }
     }
 }
@@ -185,6 +198,11 @@ int main() {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
+            // if (e.type == SDL_KEYDOWN) {
+            //     if (e.key.keysym.sym == SDLK_j) {
+            //         splitAstroid(gameState.astroids, 0);
+            //     }
+            // }
         }
 
         gameState.update(deltaTime);

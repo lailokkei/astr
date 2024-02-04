@@ -28,10 +28,10 @@ struct Astroid {
     Mesh mesh;
     Vector2 hitbox = {14, 14};
 
-    int sizeTier;
+    int size = 0;
 
     void move(double);
-    Astroid(Vector2, Vector2, double);
+    Astroid(Vector2, Vector2, double, int);
 };
 
 #endif

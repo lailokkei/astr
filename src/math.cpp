@@ -32,6 +32,8 @@ void Mesh::debug() {
     }
 }
 
+// bool point_box_collision();
+
 bool collision(Hitbox h1, Hitbox h2) {
     auto x1r = h1.position.x + h1.dimensions.x / 2;
     auto x1l = h1.position.x - h1.dimensions.x / 2;
