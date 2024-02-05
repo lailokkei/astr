@@ -10,7 +10,7 @@ struct Camera {
 
 struct Player {
     Vector2 position;
-    double angle;
+    double angle{};
     Vector2 velocity = Vector2(0, 0);
     Vector2 hitbox = Vector2{2, 3};
     Mesh mesh =
@@ -22,11 +22,11 @@ struct Player {
 
 struct Astroid {
     Vector2 position;
-    double angle;
     Vector2 velocity;
-    double angularVelocity;
-    Mesh mesh;
-    Vector2 hitbox = {14, 14};
+    double angle{};
+    double angularVelocity{};
+    Mesh mesh{{}};
+    Vector2 hitbox{{}, {}};
 
     int size = 0;
 

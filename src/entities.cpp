@@ -14,10 +14,11 @@ Mesh generateAstroidMesh(double radius);
 
 Astroid::Astroid(Vector2 position, Vector2 velocity, double angularVelocity,
                  int size)
-    : position{position}, velocity{velocity}, angularVelocity{angularVelocity},
-      mesh{generateAstroidMesh(size * 2)} {
+    : position{position}, velocity{velocity} {
     auto length = double(size) * 2 * 2;
     hitbox = {length, length};
+    this->mesh = generateAstroidMesh(size * 2);
+    this->angularVelocity = angularVelocity;
     this->size = size;
 }
 

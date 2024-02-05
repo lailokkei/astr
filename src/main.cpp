@@ -13,6 +13,7 @@
 #include <format>
 #include <iostream>
 #include <numbers>
+#include <random>
 #include <vector>
 
 #include "entities.hpp"
@@ -21,7 +22,7 @@
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
 
-const double angularVelocity = 180 * std::numbers::pi / 180;
+const double angularVelocity = 220 * std::numbers::pi / 180;
 const int acceleration = 20;
 const double bulletVelocity = 100;
 
@@ -108,7 +109,6 @@ struct GameState {
     void poll();
     void update(double);
     void render(SDL_Renderer*);
-    void shootBullet();
 };
 
 GameState::GameState() {
@@ -119,11 +119,17 @@ GameState::GameState() {
 
 void splitAstroid(std::vector<Astroid>& astroids, int i) {
     auto& parent = astroids[i];
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> angleRange(0, 2 * std::numbers::pi);
+
+    Vector2 v1 =
+        vectorAdd(vectorRotate({0, 3}, angleRange(gen)), parent.velocity);
+    Vector2 v2 =
+        vectorAdd(vectorRotate({0, 3}, angleRange(gen)), parent.velocity);
     if (parent.size > 1) {
-        astroids.push_back(
-            Astroid(parent.position, {-2, 0}, -1, parent.size - 1));
-        astroids.push_back(
-            Astroid(parent.position, {2, 0}, 1, parent.size - 1));
+        astroids.push_back(Astroid(parent.position, v1, -1, parent.size - 1));
+        astroids.push_back(Astroid(parent.position, v2, 1, parent.size - 1));
     }
 
     astroids.erase(astroids.begin() + i);
@@ -153,7 +159,6 @@ void GameState::update(double deltaTime) {
         bullet.position =
             vectorAdd(bullet.position, vectorScale(bullet.velocity, deltaTime));
         if (out_of_bounds(bullet.position, camera)) {
-            std::cout << "ded\n";
             remove_bullet(bullets, i);
         }
     }
@@ -163,7 +168,6 @@ void GameState::update(double deltaTime) {
             auto& astroid = astroids[j];
             auto box = Hitbox{astroid.position, astroid.hitbox};
             if (point_box_collision(bullets[i].position, box)) {
-                std::cout << "wtf\n";
                 splitAstroid(astroids, j);
                 remove_bullet(bullets, i);
                 break;
@@ -185,7 +189,6 @@ void GameState::update(double deltaTime) {
     }
 
     if (idk) {
-        std::cout << bullets.size() << '\n';
         bullets.push_back(Bullet{
             player.position, vectorRotate({0, bulletVelocity}, player.angle)});
     }
@@ -211,9 +214,10 @@ void GameState::render(SDL_Renderer* renderer) {
                    transformMesh(astroid.mesh, astroid.position, astroid.angle),
                    camera);
 
-        SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
-        renderMesh(renderer,
-                   boxMesh(Hitbox{{astroid.position}, astroid.hitbox}), camera);
+        // SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
+        // renderMesh(renderer,
+        //            boxMesh(Hitbox{{astroid.position}, astroid.hitbox}),
+        //            camera);
     }
 
     for (auto bullet : bullets) {
@@ -221,12 +225,10 @@ void GameState::render(SDL_Renderer* renderer) {
         renderMesh(renderer, boxMesh(Hitbox{{bullet.position}, bullet.hitbox}),
                    camera);
     }
-
-    SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
-    renderMesh(renderer, boxMesh(Hitbox{{player.position}, player.hitbox}),
-               camera);
-    renderMesh(renderer, boxMesh(Hitbox{{player.position}, player.hitbox}),
-               camera);
+    //
+    // SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
+    // renderMesh(renderer, boxMesh(Hitbox{{player.position}, player.hitbox}),
+    //            camera);
 
     SDL_RenderPresent(renderer);
 }
