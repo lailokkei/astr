@@ -102,6 +102,7 @@ struct GameState {
     Camera camera = Camera{100, 75};
 
     bool idk{};
+    bool ded{};
 
     GameState();
     void poll();
@@ -179,7 +180,7 @@ void GameState::update(double deltaTime) {
 
         if (collision(Hitbox{player.position, player.hitbox},
                       Hitbox{astroid.position, astroid.hitbox})) {
-            splitAstroid(astroids, i);
+            ded = true;
         }
     }
 
@@ -248,7 +249,7 @@ int main() {
 
     GameState gameState = GameState();
 
-    while (!quit) {
+    while (!quit && !gameState.ded) {
         auto curentFrame = SDL_GetTicks();
         double deltaTime = double(curentFrame - lastFrame) / 1000;
 
