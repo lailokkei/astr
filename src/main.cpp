@@ -8,6 +8,8 @@
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <format>
@@ -112,9 +114,9 @@ struct GameState {
 };
 
 GameState::GameState() {
-    astroids.push_back(Astroid(Vector2(20, 36), Vector2{2, 1}, 0.5, 7));
-    astroids.push_back(Astroid(Vector2(0, 2), Vector2{2, 1}, -0.1, 3));
-    astroids.push_back(Astroid(Vector2(90, 4), Vector2{-4, 1}, 0.2, 3));
+    astroids.push_back(Astroid(Vector2(20, 36), Vector2{2, 1}, 0.5, 6));
+    astroids.push_back(Astroid(Vector2(0, 2), Vector2{2, 1}, -0.1, 4));
+    astroids.push_back(Astroid(Vector2(90, 4), Vector2{-4, 1}, 0.2, 4));
 }
 
 void splitAstroid(std::vector<Astroid>& astroids, int i) {
@@ -249,11 +251,33 @@ int main() {
     bool quit = false;
     auto lastFrame = SDL_GetTicks();
 
+    std::array<Uint32, 10> frameBuffer = {};
+    std::fill(frameBuffer.begin(), frameBuffer.end(), 0);
+
     GameState gameState = GameState();
 
+    std::cout << "\033[2J";
+
     while (!quit && !gameState.ded) {
-        auto curentFrame = SDL_GetTicks();
-        double deltaTime = double(curentFrame - lastFrame) / 1000;
+        auto currentFrame = SDL_GetTicks();
+        double deltaTime = double(currentFrame - lastFrame) / 1000.0;
+
+        for (int i = frameBuffer.size() - 1; i > 0; i--) {
+            frameBuffer[i] = frameBuffer[i - 1];
+        }
+        frameBuffer[0] = currentFrame;
+
+        double fps =
+            frameBuffer.size() /
+            ((frameBuffer[0] - frameBuffer[frameBuffer.size() - 1]) / 1000.0);
+
+        // for (auto i : frameBuffer) {
+        //     std::cout << i << " ";
+        // }
+        // std::cout << "\n";
+
+        std::cout << "\033[H";
+        std::cout << std::format("{}\n", fps);
 
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -270,7 +294,7 @@ int main() {
         gameState.update(deltaTime);
         gameState.render(renderer);
 
-        lastFrame = curentFrame;
+        lastFrame = currentFrame;
         gameState.idk = false;
     }
 
