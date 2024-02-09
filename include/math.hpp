@@ -10,7 +10,7 @@ struct Vector2 {
     void debug();
 };
 
-struct Hitbox {
+struct AABB {
     Vector2 position;
     Vector2 dimensions;
 };
@@ -27,13 +27,13 @@ struct Transform {
     double angle;
 };
 
-Vector2 vectorAdd(const Vector2&, const Vector2&);
+Vector2 vector_add(const Vector2&, const Vector2&);
 
-Vector2 vectorScale(const Vector2&, double);
+Vector2 vector_scale(const Vector2&, double);
 
-Vector2 vectorRotate(const Vector2&, double);
+Vector2 vector_rotate(const Vector2&, double);
 
-bool point_box_collision(Vector2, Hitbox);
-bool collision(Hitbox, Hitbox);
+bool point_box_collision(Vector2, AABB);
+bool collision(AABB, AABB);
 
 #endif

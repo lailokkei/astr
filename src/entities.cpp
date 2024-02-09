@@ -7,26 +7,26 @@
 Player::Player(Vector2 position) : position{position} {}
 
 void Player::update(double deltaTime) {
-    position = vectorAdd(position, vectorScale(velocity, deltaTime));
+    position = vector_add(position, vector_scale(velocity, deltaTime));
 }
 
-Mesh generateAstroidMesh(double radius);
+Mesh generate_astroid_mesh(double radius);
 
 Astroid::Astroid(Vector2 position, Vector2 velocity, double angularVelocity,
                  int size)
     : position{position}, velocity{velocity} {
     auto length = double(size) * 2 * 2;
     hitbox = {length, length};
-    this->mesh = generateAstroidMesh(size * 2);
+    this->mesh = generate_astroid_mesh(size * 2);
     this->angularVelocity = angularVelocity;
     this->size = size;
 }
 
 void Astroid::move(double deltaTime) {
-    position = vectorAdd(position, vectorScale(velocity, deltaTime));
+    position = vector_add(position, vector_scale(velocity, deltaTime));
 }
 
-Mesh generateAstroidMesh(double radius) {
+Mesh generate_astroid_mesh(double radius) {
     double noise = radius * 0.2;
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -46,7 +46,7 @@ Mesh generateAstroidMesh(double radius) {
 
     for (auto dir : directions) {
         auto vertex =
-            vectorScale(vectorRotate(Vector2{0, 1}, dir), radiusRange(gen));
+            vector_scale(vector_rotate(Vector2{0, 1}, dir), radiusRange(gen));
         astroidMesh.vertices.push_back(vertex);
     }
     astroidMesh.vertices.push_back(astroidMesh.vertices[0]);

@@ -10,15 +10,15 @@ Vector2::Vector2(double _x, double _y) {
 
 void Vector2::debug() { std::cout << std::format("x:{}, y:{}\n", x, y); }
 
-Vector2 vectorAdd(const Vector2& a, const Vector2& b) {
+Vector2 vector_add(const Vector2& a, const Vector2& b) {
     return Vector2(a.x + b.x, a.y + b.y);
 }
 
-Vector2 vectorScale(const Vector2& vec, double magnitude) {
+Vector2 vector_scale(const Vector2& vec, double magnitude) {
     return Vector2(vec.x * magnitude, vec.y * magnitude);
 }
 
-Vector2 vectorRotate(const Vector2& vec, double rad) {
+Vector2 vector_rotate(const Vector2& vec, double rad) {
     rad = -rad;
     return Vector2{vec.x * cos(rad) + vec.y * -sin(rad),
                    vec.x * sin(rad) + vec.y * cos(rad)};
@@ -33,7 +33,7 @@ void Mesh::debug() {
     }
 }
 
-bool point_box_collision(Vector2 point, Hitbox box) {
+bool point_box_collision(Vector2 point, AABB box) {
     auto r = box.position.x + box.dimensions.x / 2;
     auto l = box.position.x - box.dimensions.x / 2;
     auto u = box.position.y + box.dimensions.y / 2;
@@ -54,7 +54,7 @@ bool point_box_collision(Vector2 point, Hitbox box) {
     return true;
 }
 
-bool collision(Hitbox h1, Hitbox h2) {
+bool collision(AABB h1, AABB h2) {
     auto x1r = h1.position.x + h1.dimensions.x / 2;
     auto x1l = h1.position.x - h1.dimensions.x / 2;
     auto x2r = h2.position.x + h2.dimensions.x / 2;
