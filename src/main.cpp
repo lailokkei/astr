@@ -3,6 +3,7 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_stdinc.h>
@@ -25,8 +26,10 @@ const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
 
 const double angularVelocity = 220 * std::numbers::pi / 180;
-const int acceleration = 20;
+const int acceleration = 30;
 const double bulletVelocity = 100;
+const double particleVelocity = 50;
+const float particleSize = 1;
 
 void remove_bullet(std::vector<Bullet>& bullets, int i);
 
@@ -50,6 +53,8 @@ void renderMesh(SDL_Renderer* renderer, Mesh mesh, Camera camera) {
         SDL_RenderDrawLine(renderer, p1.x, p1.y, p2.x, p2.y);
     }
 }
+
+void render_AABB(SDL_Renderer* renderer, Hitbox box, Camera cam) {}
 
 Mesh boxMesh(Hitbox box) {
     auto r = box.position.x + box.dimensions.x / 2;
@@ -102,6 +107,7 @@ struct GameState {
     Player player = Player(Vector2(50, 36));
     std::vector<Astroid> astroids{};
     std::vector<Bullet> bullets{};
+    std::vector<Particle> particles{};
     Camera camera = Camera{100, 75};
 
     bool idk{};
@@ -143,6 +149,22 @@ void GameState::update(double deltaTime) {
         auto direction{Vector2(sin(angle), cos(angle))};
         player.velocity = vectorAdd(
             player.velocity, vectorScale(direction, acceleration * deltaTime));
+
+        int particleCount = particles.size();
+        if (particleCount == 0 ||
+            particles[particleCount - 1].timeElapsed > 0.02) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<> angleRange(0, 0.2);
+            Vector2 velocity = vectorRotate(Vector2(0, -particleVelocity),
+                                            player.angle + angleRange(gen));
+            auto newParticle = Particle{
+                .position = vectorAdd(
+                    player.position,
+                    vectorRotate(Vector2{0, -particleSize}, player.angle)),
+                .velocity = vectorAdd(velocity, player.velocity)};
+            particles.push_back(newParticle);
+        }
     }
 
     if (keyStates[SDL_SCANCODE_A]) {
@@ -155,6 +177,16 @@ void GameState::update(double deltaTime) {
 
     player.update(deltaTime);
     player.position = wrapPoint(player.position, camera);
+
+    for (int i = particles.size() - 1; i >= 0; i--) {
+        auto& particle = particles[i];
+        particle.position = vectorAdd(
+            particle.position, vectorScale(particle.velocity, deltaTime));
+        particle.timeElapsed += deltaTime;
+        if (particle.timeElapsed > particle.lifetime) {
+            particles.erase(particles.begin() + i);
+        }
+    }
 
     for (int i = bullets.size() - 1; i >= 0; i--) {
         auto& bullet = bullets[i];
@@ -225,6 +257,21 @@ void GameState::render(SDL_Renderer* renderer) {
     for (auto bullet : bullets) {
         SDL_SetRenderDrawColor(renderer, 0xff, 0x0, 0x0, 0xff);
         renderMesh(renderer, boxMesh(Hitbox{{bullet.position}, bullet.hitbox}),
+                   camera);
+    }
+
+    for (auto particle : particles) {
+        SDL_SetRenderDrawColor(
+            renderer, 0xff * (1 - (particle.timeElapsed / particle.lifetime)),
+            0x0, 0x0, 0xff);
+        // 0xff *
+        //     (particle.timeElapsed / particle.lifetime));
+        auto idk = worldToScreen(particle.position, camera);
+        // auto rect = SDL_Rect{idk.x, idk.y, 10, 10};
+        // SDL_RenderFillRect(renderer, &rect);
+        renderMesh(renderer,
+                   boxMesh(Hitbox{{particle.position},
+                                  Vector2{particleSize, particleSize}}),
                    camera);
     }
     //

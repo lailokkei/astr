@@ -40,4 +40,12 @@ struct Bullet {
     Vector2 hitbox = {1, 1};
 };
 
+struct Particle {
+    Vector2 position;
+    Vector2 velocity;
+
+    double timeElapsed{};
+    double lifetime = 1;
+};
+
 #endif
